@@ -3,6 +3,7 @@ import os
 import numpy as np
 from PIL import Image
 from sklearn.model_selection import train_test_split
+from skimage.color import rgb2gray, rgb2hsv
 
 IMG_SIZE = (64, 64)
 DATA_DIRS = {
@@ -47,3 +48,31 @@ def load_images() -> tuple[np.ndarray, np.ndarray, list[str]]:
                     continue
 
     return np.array(images), np.array(labels), class_names
+
+
+def RGB2HSV():
+    """
+    Converts RGB images to HSV color space.
+    """
+    pass 
+
+def rgb2gray(images: Image) -> np.ndarray:
+    """
+    Converts RGB images to grayscale using skimage.
+
+    Args:
+        images (np.ndarray): Array of RGB images with shape (N, H, W, 3).
+
+    Returns:
+        np.ndarray: Array of grayscale images with shape (N, H, W).
+    """
+    grayscale_images = []
+
+    for image in images:
+        gray = rgb2gray(image)
+        grayscale_images.append(gray)
+
+    return np.array(grayscale_images)
+
+    
+
