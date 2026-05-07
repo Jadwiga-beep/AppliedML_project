@@ -50,14 +50,27 @@ def load_images() -> tuple[np.ndarray, np.ndarray, list[str]]:
     return np.array(images), np.array(labels), class_names
 
 
-def RGB2HSV():
+def rgb_2_hsv(images: np.ndarray) -> np.ndarray:
     """
     Converts RGB images to HSV color space.
+
+    Args:
+        images (np.ndarray): Array of RGB images with shape (N, H, W, 3).           
+
+    Returns:
+        np.ndarray: Array of HSV images with shape (N, H, W, 3).    
     """
-    pass
+    hsv_images = []
+
+    for image in images:
+        hsv = rgb2hsv(image)
+        hsv_images.append(hsv)
+
+    return np.array(hsv_images)
 
 
-def rgb2gray(images: np.ndarray) -> np.ndarray:
+
+def rgb_2_gray(images: np.ndarray) -> np.ndarray:
     """
     Converts RGB images to grayscale using skimage.
 
