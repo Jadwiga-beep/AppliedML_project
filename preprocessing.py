@@ -10,7 +10,17 @@ DATA_DIRS = {
     "vegetables": "data/vegetables",
 }
 
-def load_images():
+
+def load_images() -> tuple[np.ndarray, np.ndarray, list[str]]:
+    """
+    Loads images from the specified directories, resizes them,
+    and returns the image data, labels, and class names.
+
+    Returns:
+        images (np.ndarray): Array of image data.
+        labels (np.ndarray): Array of corresponding labels for the images.
+        class_names (list[str]): List of class names corresponding to the labels.
+    """
     images = []
     labels = []
     class_names = []
@@ -22,10 +32,12 @@ def load_images():
                 continue
             label = len(class_names)
             class_names.append(class_name)
+
             for fname in sorted(os.listdir(class_path)):
                 if not fname.lower().endswith((".jpg", ".jpeg", ".png")):
                     continue
                 img_path = os.path.join(class_path, fname)
+
                 try:
                     img = Image.open(img_path).convert("RGB")
                     img = img.resize(IMG_SIZE)
@@ -35,4 +47,3 @@ def load_images():
                     continue
 
     return np.array(images), np.array(labels), class_names
-
