@@ -87,3 +87,16 @@ def rgb_2_gray(images: np.ndarray) -> np.ndarray:
         grayscale_images.append(gray)
 
     return np.array(grayscale_images)
+
+
+def normalize(images: np.ndarray) -> np.ndarray:
+    """
+    Normalizes image pixel values to [0, 1].
+
+    Args:
+        images (np.ndarray): Array of images with integer or float pixel values.
+
+    Returns:
+        np.ndarray: Array of images with float pixel values in [0, 1].
+    """
+    return images.astype(np.float32) / images.max()
