@@ -100,3 +100,25 @@ def normalize(images: np.ndarray) -> np.ndarray:
         np.ndarray: Array of images with float pixel values in [0, 1].
     """
     return images.astype(np.float32) / images.max()
+
+
+def split(
+    images: np.ndarray, labels: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Splits images and labels into train, validation, and test sets (70:15:15).
+
+    Args:
+        images (np.ndarray): Array of images.
+        labels (np.ndarray): Array of corresponding labels.
+
+    Returns:
+        tuple: X_train, X_val, X_test, y_train, y_val, y_test
+    """
+    X_train, X_temp, y_train, y_temp = train_test_split(
+        images, labels, test_size=0.30, random_state=42, stratify=labels
+    )
+    X_val, X_test, y_val, y_test = train_test_split(
+        X_temp, y_temp, test_size=0.50, random_state=42, stratify=y_temp
+    )
+    return X_train, X_val, X_test, y_train, y_val, y_test
