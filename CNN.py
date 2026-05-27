@@ -8,7 +8,9 @@ class CNN(nn.Module):
     """
 
     def __init__(
-        self, input_shape: tuple[int, int, int], num_classes: int = 10
+        self,
+        input_shape: tuple[int, int, int],
+        num_classes: int = 10,
     ) -> None:
         """
         Initializes the CNN model with the specified input shape and number of classes.

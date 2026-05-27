@@ -1,4 +1,5 @@
 import copy
+import os
 
 import numpy as np
 import torch
@@ -225,3 +226,38 @@ def evaluate_test(
 
     print(f"[{name}] Test accuracy: {test_acc:.4f}")
     return test_acc
+
+
+def save_model(model: CNN, file_name: str) -> bool:
+    """
+    This method saves a trained model in a new file.
+
+    Args:
+        model (CNN): The trained CNN model to save.
+        file_name(str): The name of the file under which the model is saved.
+
+    Returns:
+        bool: True if the model was successfully saved, otherwise False.
+    """
+    folder = os.path.dirname(file_name)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
+    torch.save(model.state_dict(), file_name)
+    print(f"Successfully saved {file_name}")
+    return True
+
+
+def load_model(file_name: str) -> CNN:
+    """
+    This method loads a trained model from a zip file.
+
+    Args:
+        file_name(str): The name of the file under which the model is saved.
+
+    Returns:
+        CNN: The saved CNN model.
+    """
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = CNN(input_shape=(64, 64, 3), num_classes=3).to(device)
+    print(f"Successfully loaded {file_name}")
+    return model

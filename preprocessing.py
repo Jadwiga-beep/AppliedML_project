@@ -55,10 +55,10 @@ def rgb_2_hsv(images: np.ndarray) -> np.ndarray:
     Converts RGB images to HSV color space.
 
     Args:
-        images (np.ndarray): Array of RGB images with shape (N, H, W, 3).           
+        images (np.ndarray): Array of RGB images with shape (N, H, W, 3).
 
     Returns:
-        np.ndarray: Array of HSV images with shape (N, H, W, 3).    
+        np.ndarray: Array of HSV images with shape (N, H, W, 3).
     """
     hsv_images = []
 
@@ -67,6 +67,7 @@ def rgb_2_hsv(images: np.ndarray) -> np.ndarray:
         hsv_images.append(hsv)
 
     return np.array(hsv_images)
+
 
 def normalize(images: np.ndarray) -> np.ndarray:
     """
@@ -79,6 +80,7 @@ def normalize(images: np.ndarray) -> np.ndarray:
         np.ndarray: Array of images with float pixel values in [0, 1].
     """
     return images.astype(np.float32) / 255.0
+
 
 def rgb_2_gray(images: np.ndarray) -> np.ndarray:
     """
@@ -97,7 +99,6 @@ def rgb_2_gray(images: np.ndarray) -> np.ndarray:
         grayscale_images.append(gray)
 
     return np.array(grayscale_images)
-
 
 
 def split(
