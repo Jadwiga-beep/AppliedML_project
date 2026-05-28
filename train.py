@@ -8,7 +8,7 @@ import torch.nn as nn
 from CNN import CNN
 
 # Hyperparameters for training the CNN model
-EPOCHS = 2
+EPOCHS = 50
 BATCH_SIZE = 32
 PATIENCE = 5
 LR = 1e-3
