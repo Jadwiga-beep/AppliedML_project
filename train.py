@@ -8,10 +8,16 @@ import torch.nn as nn
 from CNN import CNN
 
 # Hyperparameters for training the CNN model
-EPOCHS = 50
+EPOCHS = 2
 BATCH_SIZE = 32
 PATIENCE = 5
 LR = 1e-3
+INPUT_SHAPES = {
+    "rgb": (64, 64, 3),
+    "hsv": (64, 64, 3),
+    "gray": (64, 64, 1),
+}
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def set_seed(seed: int = 42) -> None:
@@ -51,14 +57,13 @@ def train(
         CNN: The trained CNN model.
     """
     set_seed()
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    X_train = torch.tensor(X_train).float().to(device)
-    X_val = torch.tensor(X_val).float().to(device)
-    y_train = torch.tensor(y_train).long().to(device)
-    y_val = torch.tensor(y_val).long().to(device)
+    X_train = torch.tensor(X_train).float().to(DEVICE)
+    X_val = torch.tensor(X_val).float().to(DEVICE)
+    y_train = torch.tensor(y_train).long().to(DEVICE)
+    y_val = torch.tensor(y_val).long().to(DEVICE)
 
-    model = CNN(input_shape=input_shape, num_classes=num_classes).to(device)
+    model = CNN(input_shape=input_shape, num_classes=num_classes).to(DEVICE)
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
@@ -69,7 +74,7 @@ def train(
     # Training loop with early stopping based on validation loss
     for epoch in range(EPOCHS):
         model.train()
-        perm = torch.randperm(len(X_train), device=device)
+        perm = torch.randperm(len(X_train), device=DEVICE)
         X_train, y_train = X_train[perm], y_train[perm]
 
         total_loss = 0.0
@@ -247,7 +252,7 @@ def save_model(model: CNN, file_name: str) -> bool:
     return True
 
 
-def load_model(file_name: str) -> CNN:
+def load_model(file_name: str, model_name: str) -> CNN:
     """
     This method loads a trained model from a zip file.
 
@@ -257,7 +262,14 @@ def load_model(file_name: str) -> CNN:
     Returns:
         CNN: The saved CNN model.
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = CNN(input_shape=(64, 64, 3), num_classes=3).to(device)
+    if model_name not in INPUT_SHAPES:
+        raise ValueError(f"Unknown model name '{model_name}'")
+    state = torch.load(file_name, map_location=DEVICE)
+    num_classes = state["fc2.bias"].shape[0]
+    model = CNN(input_shape=INPUT_SHAPES[model_name], num_classes=num_classes).to(
+        DEVICE
+    )
+    model.load_state_dict(state)
+    model.eval()
     print(f"Successfully loaded {file_name}")
     return model
