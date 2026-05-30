@@ -287,7 +287,7 @@ def save_class_names(class_names: list, file_name: str) -> bool:
     Returns:
         bool: True if the class list was successfully saved, otherwise False.
     """
-    
+
     folder = os.path.dirname(file_name)
     if folder:
         os.makedirs(folder, exist_ok=True)
@@ -311,4 +311,8 @@ def load_class_names(file_name: str) -> list:
         raise Exception(f"Can not find {file_name} to load")
     loaded_names = json.load(open(file_name))
     print(f"Successfully loaded {file_name}")
-    return loaded_names
+    pretty_names = []
+    for name in loaded_names:
+        name = name[5:]
+        pretty_names.append(name)
+    return pretty_names

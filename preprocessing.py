@@ -122,9 +122,3 @@ def split(
         X_temp, y_temp, test_size=0.50, random_state=42, stratify=y_temp
     )
     return X_train, X_val, X_test, y_train, y_val, y_test
-
-
-def preprocess(raw, name):
-    img = Image.open(io.BytesIO(raw)).convert("RGB").resize(IMG_SIZE)
-    img = np.array(img)
-    # XXX
