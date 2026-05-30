@@ -1,4 +1,5 @@
 import copy
+import json
 import os
 
 import numpy as np
@@ -273,3 +274,41 @@ def load_model(file_name: str, model_name: str) -> CNN:
     model.eval()
     print(f"Successfully loaded {file_name}")
     return model
+
+
+def save_class_names(class_names: list, file_name: str) -> bool:
+    """
+    This method saves the list of class names to a json file.
+
+    Args:
+        class_names(list): The list of class names
+        file_name(str): The name of the file under which the class list is saved.
+
+    Returns:
+        bool: True if the class list was successfully saved, otherwise False.
+    """
+    
+    folder = os.path.dirname(file_name)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
+    json.dump(class_names, open(file_name, "w"))
+    print(f"Successfully saved {file_name}")
+    return True
+
+
+def load_class_names(file_name: str) -> list:
+    """
+    This method loads class names from a json file.
+
+    Args:
+        file_name(str): The name of the file under which the class names are stored.
+
+    Returns:
+        list: The list of the class names.
+    """
+
+    if not os.path.exists(file_name):
+        raise Exception(f"Can not find {file_name} to load")
+    loaded_names = json.load(open(file_name))
+    print(f"Successfully loaded {file_name}")
+    return loaded_names

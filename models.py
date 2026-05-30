@@ -5,6 +5,7 @@ from train import (
     evaluate_test,
     evaluate_validation,
     retrain_with_best_val,
+    save_class_names,
     save_model,
     train,
 )
@@ -127,6 +128,7 @@ def main():
     save_model(optimized_model_rgb, "./models/CNN_rgb.zip")
     save_model(optimized_model_hsv, "./models/CNN_hsv.zip")
     save_model(optimized_model_gray, "./models/CNN_gray.zip")
+    save_class_names(class_names, "./models/class_names.json")
 
     # Printing the comparison of validation and test accuracies for all models.
     print("\n--- Comparison between models on the validation set ---")
