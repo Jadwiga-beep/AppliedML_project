@@ -10,13 +10,28 @@ from pydantic import BaseModel
 from preprocessing import IMG_SIZE, rgb_2_gray, rgb_2_hsv
 from train import DEVICE, load_class_names, load_model
 
-
-class ModelInput(BaseModel):
-    pass
-
-
-app = FastAPI()
 MODELS = {}
+
+
+class Prediction(BaseModel):
+    predicted_class_name: str
+    confidence: float
+
+
+class PredictResponse(BaseModel):
+    filename: str
+    results: dict[str, Prediction]
+
+
+class RootResponse(BaseModel):
+    loaded_models: list[str]
+
+
+app = FastAPI(
+    title="Fruit & Vegetable Classifier",
+    description="Classifies images using three CNNs (RGB, HSV, grayscale color spaces).",
+    version="1.0.0",
+)
 
 try:
     MODELS["rgb"] = load_model("./models/CNN_rgb.zip", "rgb")
@@ -24,11 +39,25 @@ try:
     MODELS["gray"] = load_model("./models/CNN_gray.zip", "gray")
     CLASS_NAMES = load_class_names("./models/class_names.json")
 except Exception as e:
-    raise HTTPException(status_code=400, detail=f"{e}")
+    raise RuntimeError(f"Failed to load models: {e}") from e
 
 
-@app.get("/")
-async def root():
+@app.get(
+    "/",
+    response_model=RootResponse,
+    summary="List loaded models",
+    tags=["Status"],
+)
+async def root() -> dict:
+    """
+    Returns the CNN models currently loaded in memory.
+
+    Args:
+        None
+
+    Returns:
+        dict: A dictionary with a single key "loaded_models" mapping to a list of the loaded model names.
+    """
     return {"loaded_models": list(MODELS.keys())}
 
 
@@ -89,9 +118,36 @@ def preprocess(raw: bytes, model_name: str) -> torch.Tensor:
     return torch.tensor(batch).float().to(DEVICE)
 
 
-@app.post("/predict")
-async def predict_all(file: UploadFile = File(...)):
+@app.post(
+    "/predict",
+    response_model=PredictResponse,
+    summary="Classify an image",
+    tags=["Inference"],
+    responses={
+        400: {"description": "Invalid image or unknown model"},
+        503: {"description": "No models loaded"},
+    },
+)
+async def predict_all(
+    file: UploadFile = File(..., description="Image file (jpg, jpeg, png) to classify"),
+):
+    """
+    Runs the uploaded image through all loaded models and returns the
+    predicted class and confidence for each color space.
 
+    Args:
+        file (UploadFile): The uploaded image file (jpg, jpeg, or png) to classify.
+
+    Returns:
+        dict: A dictionary with the original "filename" and a "results" mapping where 
+              each model name (rgb, hsv, gray) maps to its predicted class
+             name and confidence score.
+
+    Raises:
+        HTTPException:
+            - 503 error if no models are loaded.
+            - 400 error if the uploaded image is invalid
+    """
     if not MODELS:
         raise HTTPException(status_code=503, detail="No models loaded.")
 
