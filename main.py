@@ -16,6 +16,7 @@ MODELS = {}
 class Prediction(BaseModel):
     predicted_class_name: str
     confidence: float
+    probabilities: dict[str, float]
 
 
 class PredictResponse(BaseModel):
@@ -73,9 +74,15 @@ def predict(model_name: str, tensor: torch.Tensor):
     index = int(probs.argmax().item())
     class_name = CLASS_NAMES[index]
 
+    sorted_probs, sorted_idx = torch.topk(probs, probs.shape[0])
+    probabilities = {
+        CLASS_NAMES[int(i)]: round(float(p), 2)
+        for p, i in zip(sorted_probs, sorted_idx)
+    }
     return {
         "predicted_class_name": class_name,
         "confidence": float(probs[index].item()),
+        "probabilities": probabilities,
     }
 
 
@@ -139,7 +146,7 @@ async def predict_all(
         file (UploadFile): The uploaded image file (jpg, jpeg, or png) to classify.
 
     Returns:
-        dict: A dictionary with the original "filename" and a "results" mapping where 
+        dict: A dictionary with the original "filename" and a "results" mapping where
               each model name (rgb, hsv, gray) maps to its predicted class
              name and confidence score.
 
