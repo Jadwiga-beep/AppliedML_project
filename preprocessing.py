@@ -102,6 +102,19 @@ def rgb_2_gray(images: np.ndarray) -> np.ndarray:
     return np.array(grayscale_images)
 
 
+def flatten_images(images: np.ndarray) -> np.ndarray:
+    """
+    Flattens images to 1D vectors for SVM input.
+
+    Args:
+        images (np.ndarray): Array of images with shape (N, H, W) or (N, H, W, C).
+
+    Returns:
+        np.ndarray: Flattened array of shape (N, H*W) or (N, H*W*C).
+    """
+    return images.reshape(images.shape[0], -1)
+
+
 def split(
     images: np.ndarray, labels: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
