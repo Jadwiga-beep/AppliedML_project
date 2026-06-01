@@ -8,13 +8,14 @@ The CNN models are deployed using FastAPI, which allows users to upload an RGB i
 ## Installation dependencies
 
 1. Clone the repository 
-git clone <git@github.com:Jadwiga-beep/AppliedML\_project.git>
+git clone git@github.com:Jadwiga-beep/AppliedML\_project.git
+
 cd AppliedML_project
 
-2. Create a virtual environment and install dependencies 
+3. Create a virtual environment and install dependencies 
 uv sync
 
-3. Activate the virtual environment
+4. Activate the virtual environment
 source .venv/bin/activate
 
 ## Launch API
