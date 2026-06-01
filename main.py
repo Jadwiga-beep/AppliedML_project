@@ -11,6 +11,7 @@ from preprocessing import IMG_SIZE, rgb_2_gray, rgb_2_hsv
 from train import DEVICE, load_class_names, load_model
 
 MODELS = {}
+ALLOWED_TYPES = {"image/jpeg", "image/png"}
 
 
 class Prediction(BaseModel):
@@ -132,6 +133,7 @@ def preprocess(raw: bytes, model_name: str) -> torch.Tensor:
     tags=["Inference"],
     responses={
         400: {"description": "Invalid image or unknown model"},
+        415: {"description": "Unsupported file type"},
         503: {"description": "No models loaded"},
     },
 )
@@ -158,6 +160,11 @@ async def predict_all(
     if not MODELS:
         raise HTTPException(status_code=503, detail="No models loaded.")
 
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported type: {file.content_type}",
+        )
     results = {}
     raw = await file.read()
     for model_name in MODELS:
