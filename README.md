@@ -1,5 +1,7 @@
 # Applied ML project: Fruits & Vegetable Classifier
 
+![Image of an Apple in RGB, HSV, and greyscale](images/rgb,hsv,gray,example.png)
+
 ## Description
 This project implements a CNN that classifies fruits and vegetables and an SVM that is used as a baseline model. This project trains 3 CNNs, which are trained on three color spaces (RGB, HSV, and greyscale). 
 
