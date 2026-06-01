@@ -16,6 +16,7 @@ from train import (
     save_model,
     train, load_class_names,
 )
+from SVM import run_svm_baseline
 
 
 def main() -> None:
@@ -54,9 +55,9 @@ def main() -> None:
 
     # Evaluating on the validation set
     rgb_val_acc = evaluate_validation(MODELS["rgb"], change_order(X_val), y_val, "RGB")
-    hsv_val_acc = evaluate_validation(MODELS["hsv"], change_order(X_val), y_val, "HSV")
+    hsv_val_acc = evaluate_validation(MODELS["hsv"], change_order(rgb_2_hsv(X_val)), y_val, "HSV")
     gray_val_acc = evaluate_validation(
-        MODELS["gray"], add_dimension(X_val), y_val, "Grayscale"
+        MODELS["gray"], add_dimension(rgb_2_gray(X_val)), y_val, "Grayscale"
     )
 
     # Evaluating on the test set
@@ -64,10 +65,10 @@ def main() -> None:
         MODELS["rgb"], change_order(X_test), y_test, "RGB"
     )
     hsv_test_acc = evaluate_test(
-        MODELS["hsv"], change_order(X_test), y_test, "HSV"
+        MODELS["hsv"], change_order(rgb_2_hsv(X_test)), y_test, "HSV"
     )
     gray_test_acc = evaluate_test(
-        MODELS["gray"], add_dimension(X_test), y_test, "Grayscale"
+        MODELS["gray"], add_dimension(rgb_2_gray(X_test)), y_test, "Grayscale"
     )
 
     # Printing the comparison of validation and test accuracies for all models.
@@ -81,6 +82,9 @@ def main() -> None:
     print(f"RGB test accuracy: {rgb_test_acc:.4f}")
     print(f"HSV test accuracy: {hsv_test_acc:.4f}")
     print(f"Grayscale test accuracy: {gray_test_acc:.4f}")
+
+    print("\n--- Training SVM baseline models ---")
+    run_svm_baseline(images, labels, "./models")
 
 
 # Running the main function
