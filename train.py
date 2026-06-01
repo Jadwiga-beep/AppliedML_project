@@ -333,11 +333,35 @@ def load_class_names(file_name: str) -> list:
 
     return pretty_names
 
+def load_and_prepare_data() -> tuple[np.ndarray, np.ndarray, list[str]]:
+    """
+    Loads the image dataset, normalizes pixel values to [0, 1], and returns
+    the images, labels, and class names. Shared by train_and_save and evaluate_all.
 
-def train_and_save():
-    # Loading and preprocessing the data
+    Args:
+        None
+        
+    Returns:
+        tuple: (images, labels, class_names)
+    """
     images, labels, class_names = load_images()
     images = normalize(images)
+    return images, labels, class_names
+
+def train_and_save()-> None:
+    """
+    This method trains CNN models for RGB, HSV, and grayscale color spaces, evaluates 
+    them on the validation set, retrains them using the combined training and validation 
+    sets, evaluates them on the test set, and saves the optimized models and class names to disk.
+
+    Args:
+        None
+
+    Returns:    
+        None
+    """
+    # Loading and preprocessing the data
+    images, labels, class_names = load_and_prepare_data()
     num_classes = len(class_names)
 
     # RGB
@@ -408,5 +432,43 @@ def train_and_save():
     save_class_names(class_names, "./models/class_names.json")
 
 
-if __name__ == "__train__":
-    train_and_save()
+def evaluate_all() -> None:
+    """
+    Loads the saved CNN models, evaluates them on the validation and test sets,
+    and prints the accuracy comparison across the three color spaces.
+    
+    Args:
+        None
+
+    Returns:
+        None
+    """
+    images, labels, class_names = load_and_prepare_data()
+
+    MODELS = {}
+    try:
+        MODELS["rgb"] = load_model("./models/CNN_rgb.zip", "rgb")
+        MODELS["hsv"] = load_model("./models/CNN_hsv.zip", "hsv")
+        MODELS["gray"] = load_model("./models/CNN_gray.zip", "gray")
+    except Exception as e:
+        raise RuntimeError(f"Failed to load models: {e}") from e
+
+    X_train, X_val, X_test, y_train, y_val, y_test = split(images, labels)
+
+    rgb_val_acc = evaluate_validation(MODELS["rgb"], change_order(X_val), y_val, "RGB")
+    hsv_val_acc = evaluate_validation(MODELS["hsv"], change_order(rgb_2_hsv(X_val)), y_val, "HSV")
+    gray_val_acc = evaluate_validation(MODELS["gray"], add_dimension(rgb_2_gray(X_val)), y_val, "Grayscale")
+
+    rgb_test_acc = evaluate_test(MODELS["rgb"], change_order(X_test), y_test, "RGB")
+    hsv_test_acc = evaluate_test(MODELS["hsv"], change_order(rgb_2_hsv(X_test)), y_test, "HSV")
+    gray_test_acc = evaluate_test(MODELS["gray"], add_dimension(rgb_2_gray(X_test)), y_test, "Grayscale")
+
+    print("\n--- Comparison between CNN models on the validation set ---")
+    print(f"RGB validation accuracy: {rgb_val_acc:.4f}")
+    print(f"HSV validation accuracy: {hsv_val_acc:.4f}")
+    print(f"Grayscale validation accuracy: {gray_val_acc:.4f}")
+
+    print("\n--- Comparison between CNN models on the test set ---")
+    print(f"RGB test accuracy: {rgb_test_acc:.4f}")
+    print(f"HSV test accuracy: {hsv_test_acc:.4f}")
+    print(f"Grayscale test accuracy: {gray_test_acc:.4f}")

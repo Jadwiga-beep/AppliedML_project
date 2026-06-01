@@ -35,37 +35,42 @@ The CNN models are deployed using FastAPI, which allows users to upload an RGB i
 data/               Folder with the images of our dataset
     fruits/         Folder containing all images of fruit - 5 classes
     vegetables/     Folder containing all images of vegetables - 5 classes
-images/             Folder with code-generated images
-models/             Folder with pre-trained models used by the API
+images/             Folder with code-generated images and plots
+models/             Folder with pre-trained models used by the API and list of class names as Json file
 api.py              File building the API
 CNN.py              File with the CNN model
-main.py             Main file which runs preprocessing, training, and evaluating the models
+main.py             Main file which trains, saves, and evaluates the CNN models
 plots.py            File generating plots for initial data analysis
 preprocessing.py    File with preprocessing functions
 SVM.py              File with the SVM model
-train.py            File with training the model on validation and test set
+train.py            File with retraining, evaluation, and saving functions
 ```
 
 ## Training the Model
 
 In order to train the model, run `main.py`. 
 
-This file includes preprocessing of the data, training the models, evaluating the performance on the validation set, re-training the models with teh best parameters, and evaluating the models on the test set.
+```bash
+python main.py
+```
+
+This file includes preprocessing of the data, training the models, evaluating the performance on the validation set, re-training the models with the best parameters, and evaluating the models on the test set.
+
+To train the SVM baseline separately:
+
+```bash
+python SVM.py
+```
 
 ## Launch API
 
-Before running the API, run `main.py` so the trained models are saved to disk.
+1. Before running the API, run `main.py` as described above so the trained models are saved to disk.
 
-1. Train and save the models
-
-```bash
-    python models.py
-```
 
 2. Start the API server
 
 ```bash
-    uvicorn main:app --reload
+    uvicorn api:app --reload
 ```
 
 
@@ -92,6 +97,8 @@ Then pass it an image URL in quotations:
 ```bash
 ./check.sh "https://hsph.harvard.edu/wp-content/uploads/2024/06/potatoes-1200x800-1.jpg"
 ```
+
+### Using `curl` directly
 
 To send a local image file to the API yourself:
 
