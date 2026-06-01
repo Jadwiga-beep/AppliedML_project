@@ -290,7 +290,7 @@ def load_model(file_name: str, model_name: str) -> CNN:
 
 def save_class_names(class_names: list, file_name: str) -> bool:
     """
-    This method saves the list of class names to a json file.
+    This method saves the list of class names to a .json file.
 
     Args:
         class_names(list): The list of class names
@@ -333,6 +333,7 @@ def load_class_names(file_name: str) -> list:
 
     return pretty_names
 
+
 def load_and_prepare_data() -> tuple[np.ndarray, np.ndarray, list[str]]:
     """
     Loads the image dataset, normalizes pixel values to [0, 1], and returns
@@ -340,7 +341,7 @@ def load_and_prepare_data() -> tuple[np.ndarray, np.ndarray, list[str]]:
 
     Args:
         None
-        
+
     Returns:
         tuple: (images, labels, class_names)
     """
@@ -348,16 +349,17 @@ def load_and_prepare_data() -> tuple[np.ndarray, np.ndarray, list[str]]:
     images = normalize(images)
     return images, labels, class_names
 
-def train_and_save()-> None:
+
+def train_and_save() -> None:
     """
-    This method trains CNN models for RGB, HSV, and grayscale color spaces, evaluates 
-    them on the validation set, retrains them using the combined training and validation 
+    This method trains CNN models for RGB, HSV, and grayscale color spaces, evaluates
+    them on the validation set, retrains them using the combined training and validation
     sets, evaluates them on the test set, and saves the optimized models and class names to disk.
 
     Args:
         None
 
-    Returns:    
+    Returns:
         None
     """
     # Loading and preprocessing the data
@@ -424,7 +426,6 @@ def train_and_save()-> None:
         "Grayscale",
     )
 
-
     # Saving the optimized models and class names to disk.
     save_model(optimized_model_rgb, "./models/CNN_rgb.zip")
     save_model(optimized_model_hsv, "./models/CNN_hsv.zip")
@@ -436,7 +437,7 @@ def evaluate_all() -> None:
     """
     Loads the saved CNN models, evaluates them on the validation and test sets,
     and prints the accuracy comparison across the three color spaces.
-    
+
     Args:
         None
 
@@ -456,12 +457,20 @@ def evaluate_all() -> None:
     X_train, X_val, X_test, y_train, y_val, y_test = split(images, labels)
 
     rgb_val_acc = evaluate_validation(MODELS["rgb"], change_order(X_val), y_val, "RGB")
-    hsv_val_acc = evaluate_validation(MODELS["hsv"], change_order(rgb_2_hsv(X_val)), y_val, "HSV")
-    gray_val_acc = evaluate_validation(MODELS["gray"], add_dimension(rgb_2_gray(X_val)), y_val, "Grayscale")
+    hsv_val_acc = evaluate_validation(
+        MODELS["hsv"], change_order(rgb_2_hsv(X_val)), y_val, "HSV"
+    )
+    gray_val_acc = evaluate_validation(
+        MODELS["gray"], add_dimension(rgb_2_gray(X_val)), y_val, "Grayscale"
+    )
 
     rgb_test_acc = evaluate_test(MODELS["rgb"], change_order(X_test), y_test, "RGB")
-    hsv_test_acc = evaluate_test(MODELS["hsv"], change_order(rgb_2_hsv(X_test)), y_test, "HSV")
-    gray_test_acc = evaluate_test(MODELS["gray"], add_dimension(rgb_2_gray(X_test)), y_test, "Grayscale")
+    hsv_test_acc = evaluate_test(
+        MODELS["hsv"], change_order(rgb_2_hsv(X_test)), y_test, "HSV"
+    )
+    gray_test_acc = evaluate_test(
+        MODELS["gray"], add_dimension(rgb_2_gray(X_test)), y_test, "Grayscale"
+    )
 
     print("\n--- Comparison between CNN models on the validation set ---")
     print(f"RGB validation accuracy: {rgb_val_acc:.4f}")

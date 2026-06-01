@@ -60,10 +60,11 @@ MAX_IMAGES = 100  # images per class used for PCA (keeps runtime fast)
 SAVE_DIR = "."  # where to save the output figures
 DPI = 150
 
+
 def load_images_from_class(class_path, max_n=None) -> list[np.ndarray]:
     """
     Loads images from a specified class directory, resizes them, and returns a list of image arrays.
-    
+
     Args:
         class_path (str): The path to the class directory containing the images.
         max_n (int, optional): The maximum number of images to load. If None, loads all images. Defaults to None.
@@ -98,10 +99,11 @@ def flatten_to_feature_vector(imgs: list[np.ndarray]) -> np.ndarray:
         imgs (list[np.ndarray]): A list of images, where each image is a numpy array of shape (H, W, C).
 
     Returns:
-        np.ndarray: A 2D array of shape (N, H*W*C) where N is the number of images, 
+        np.ndarray: A 2D array of shape (N, H*W*C) where N is the number of images,
             and each row is a flattened and normalized image.
     """
     return np.stack([img.astype(np.float32).flatten() / 255.0 for img in imgs])
+
 
 all_images = {}
 for cls in CLASSES:
@@ -116,7 +118,7 @@ for cls in CLASSES:
 counts = [len(all_images[c]) for c in CLASSES]
 
 
-# PLOT 1: CLASS DISTRIBUTION 
+# PLOT 1: CLASS DISTRIBUTION
 
 fig, ax = plt.subplots(figsize=(10, 4.5))
 bars = ax.bar(LABELS, counts, color=CLASS_COLORS, edgecolor="white", linewidth=0.8)
@@ -143,7 +145,7 @@ plt.savefig(os.path.join(SAVE_DIR, "plot1_class_distribution.png"), dpi=DPI)
 plt.close()
 
 
-# PLOT 2: MEAN RGB CHANNEL INTENSITY PER CLASS 
+# PLOT 2: MEAN RGB CHANNEL INTENSITY PER CLASS
 
 channel_names = ["Red", "Green", "Blue"]
 channel_colors = ["#e05252", "#4caf50", "#4a90d9"]
@@ -184,7 +186,7 @@ plt.savefig(os.path.join(SAVE_DIR, "plot2_mean_rgb_per_class.png"), dpi=DPI)
 plt.close()
 
 
-# PLOT 3: PCA 
+# PLOT 3: PCA
 
 pca_features = []
 pca_labels = []

@@ -41,7 +41,7 @@ class CNN(nn.Module):
         self.fc2 = nn.Linear(128, num_classes)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(0.5)
- 
+
     def forward(self, batch: torch.Tensor) -> torch.Tensor:
         """
         Defines the forward pass of the CNN model.

@@ -3,7 +3,7 @@
 ![Image of an Apple in RGB, HSV, and greyscale](images/rgb,hsv,gray,example.png)
 
 ## Description
-This project implements a CNN that classifies fruits and vegetables and an SVM that is used as a baseline model. This project trains 3 CNNs, which are trained on three color spaces (RGB, HSV, and greyscale). 
+This project implements a CNN that classifies fruits and vegetables and an SVM that is used as a baseline model. This project trains 3 CNNs, which are trained on three color spaces (RGB, HSV, and Grayscale). 
 
 The CNN models are deployed using FastAPI, which allows users to upload an RGB image and receive predictions from all three models.
 
@@ -51,16 +51,12 @@ train.py            File with retraining, evaluation, and saving functions
 In order to train the model, run `main.py`. 
 
 ```bash
-python main.py
+python3 main.py
 ```
 
 This file includes preprocessing of the data, training the models, evaluating the performance on the validation set, re-training the models with the best parameters, and evaluating the models on the test set.
+Additionally, it trains the SVM baseline model.
 
-To train the SVM baseline separately:
-
-```bash
-python SVM.py
-```
 
 ## Launch API
 
@@ -70,6 +66,7 @@ python SVM.py
 2. Start the API server
 
 ```bash
+    uv run
     uvicorn api:app --reload
 ```
 
@@ -95,7 +92,7 @@ chmod +x check.sh
 Then pass it an image URL in quotations:
 
 ```bash
-./check.sh "https://hsph.harvard.edu/wp-content/uploads/2024/06/potatoes-1200x800-1.jpg"
+./check.sh "image-address"
 ```
 
 ### Using `curl` directly

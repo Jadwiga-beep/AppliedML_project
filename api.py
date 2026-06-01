@@ -68,7 +68,6 @@ except Exception as e:
     summary="List loaded models",
     tags=["Status"],
 )
-
 async def root() -> dict:
     """
     Returns the CNN models currently loaded in memory.
@@ -166,7 +165,6 @@ def api_predict(model_name: str, tensor: torch.Tensor) -> dict:
         503: {"description": "No models loaded"},
     },
 )
-
 async def predict_all(
     file: UploadFile = File(..., description="Image file (jpg, jpeg, png) to classify"),
 ) -> dict:
