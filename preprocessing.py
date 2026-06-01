@@ -1,4 +1,3 @@
-import io
 import os
 
 import numpy as np
@@ -17,6 +16,9 @@ def load_images() -> tuple[np.ndarray, np.ndarray, list[str]]:
     """
     Loads images from the specified directories, resizes them,
     and returns the image data, labels, and class names.
+
+    Args:
+        None
 
     Returns:
         images (np.ndarray): Array of image data.
@@ -51,6 +53,19 @@ def load_images() -> tuple[np.ndarray, np.ndarray, list[str]]:
     return np.array(images), np.array(labels), class_names
 
 
+def normalize(images: np.ndarray) -> np.ndarray:
+    """
+    Normalizes image pixel values to [0, 1].
+
+    Args:
+        images (np.ndarray): Array of images with integer or float pixel values.
+
+    Returns:
+        np.ndarray: Array of images with float pixel values in [0, 1].
+    """
+    return images.astype(np.float32) / 255.0
+
+
 def rgb_2_hsv(images: np.ndarray) -> np.ndarray:
     """
     Converts RGB images to HSV color space.
@@ -68,19 +83,6 @@ def rgb_2_hsv(images: np.ndarray) -> np.ndarray:
         hsv_images.append(hsv)
 
     return np.array(hsv_images)
-
-
-def normalize(images: np.ndarray) -> np.ndarray:
-    """
-    Normalizes image pixel values to [0, 1].
-
-    Args:
-        images (np.ndarray): Array of images with integer or float pixel values.
-
-    Returns:
-        np.ndarray: Array of images with float pixel values in [0, 1].
-    """
-    return images.astype(np.float32) / 255.0
 
 
 def rgb_2_gray(images: np.ndarray) -> np.ndarray:
@@ -135,3 +137,30 @@ def split(
         X_temp, y_temp, test_size=0.50, random_state=42, stratify=y_temp
     )
     return X_train, X_val, X_test, y_train, y_val, y_test
+
+
+def change_order(X: np.ndarray) -> np.ndarray:
+    """
+    Changes the order of dimensions from (N, H, W, C) to
+    (N, C, H, W) for PyTorch compatibility.
+
+    Args:
+        X (np.ndarray): The input images with shape (N, H, W, C).
+
+    Returns:
+        np.ndarray: The images with shape (N, C, H, W).
+    """
+    return np.transpose(X, (0, 3, 1, 2))
+
+
+def add_dimension(X: np.ndarray) -> np.ndarray:
+    """
+    Adds a new dimension to the input array.
+
+    Args:
+        X (np.ndarray): The input array.
+
+    Returns:
+        np.ndarray: The array with an additional dimension.
+    """
+    return X[:, np.newaxis, :, :]

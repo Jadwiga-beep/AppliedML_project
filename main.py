@@ -1,165 +1,88 @@
-import io
-
-import numpy as np
-import torch
-import torch.nn
-from fastapi import FastAPI, File, HTTPException, UploadFile
-from PIL import Image
-from pydantic import BaseModel
-
-from preprocessing import IMG_SIZE, rgb_2_gray, rgb_2_hsv
-from train import DEVICE, load_class_names, load_model
-
-MODELS = {}
-
-
-class Prediction(BaseModel):
-    predicted_class_name: str
-    confidence: float
-    probabilities: dict[str, float]
-
-
-class PredictResponse(BaseModel):
-    filename: str
-    results: dict[str, Prediction]
-
-
-class RootResponse(BaseModel):
-    loaded_models: list[str]
-
-
-app = FastAPI(
-    title="Fruit & Vegetable Classifier",
-    description="Classifies images using three CNNs (RGB, HSV, grayscale color spaces).",
-    version="1.0.0",
+from preprocessing import (
+    add_dimension,
+    change_order,
+    load_images,
+    normalize,
+    rgb_2_gray,
+    rgb_2_hsv,
+    split,
+)
+from train import (
+    evaluate_test,
+    evaluate_validation,
+    load_model,
+    retrain_with_best_val,
+    save_class_names,
+    save_model,
+    train, load_class_names,
 )
 
-try:
-    MODELS["rgb"] = load_model("./models/CNN_rgb.zip", "rgb")
-    MODELS["hsv"] = load_model("./models/CNN_hsv.zip", "hsv")
-    MODELS["gray"] = load_model("./models/CNN_gray.zip", "gray")
-    CLASS_NAMES = load_class_names("./models/class_names.json")
-except Exception as e:
-    raise RuntimeError(f"Failed to load models: {e}") from e
 
-
-@app.get(
-    "/",
-    response_model=RootResponse,
-    summary="List loaded models",
-    tags=["Status"],
-)
-async def root() -> dict:
+def main() -> None:
     """
-    Returns the CNN models currently loaded in memory.
+    Main function to execute the training and evaluation process for CNN models.
 
     Args:
         None
-
-    Returns:
-        dict: A dictionary with a single key "loaded_models" mapping to a list of the loaded model names.
-    """
-    return {"loaded_models": list(MODELS.keys())}
-
-
-def predict(model_name: str, tensor: torch.Tensor):
-    if model_name not in ("rgb", "hsv", "gray"):
-        raise HTTPException(status_code=400, detail=f"Unknown model: {model_name}")
-
-    model = MODELS[model_name]
-
-    with torch.no_grad():
-        probs = torch.nn.functional.softmax(model(tensor), dim=1)[0]
-
-    index = int(probs.argmax().item())
-    class_name = CLASS_NAMES[index]
-
-    sorted_probs, sorted_idx = torch.topk(probs, probs.shape[0])
-    probabilities = {
-        CLASS_NAMES[int(i)]: round(float(p), 2)
-        for p, i in zip(sorted_probs, sorted_idx)
-    }
-    return {
-        "predicted_class_name": class_name,
-        "confidence": float(probs[index].item()),
-        "probabilities": probabilities,
-    }
-
-
-def preprocess(raw: bytes, model_name: str) -> torch.Tensor:
-    """
-    This method preprocesses raw image bytes into a normalized PyTorch tensor
-
-    Args:
-        raw (bytes): The raw binary data of the input image.
-        model_name (str): The target model name ("rgb", "hsv", or "gray").
-
-    Returns:
-        torch.Tensor: A 4D floating-point tensor with shape (1, C, H, W) and values in the range [0.0, 1.0].
-
-    Raises:
-        HTTPException:
-            - 400 error if the raw bytes cannot be parsed as a valid image.
-            - 400 error if an unsupported model name is provided.
-    """
-
-    try:
-        img = Image.open(io.BytesIO(raw)).convert("RGB").resize(IMG_SIZE)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid image: {e}") from e
-
-    orig_batch = (
-        np.array(img)[np.newaxis, ...].astype(np.float32) / 255.0
-    )  # (1, H, W, 3) in [0, 1]
-
-    if model_name == "rgb":
-        batch = orig_batch  # (1, H, W, 3)
-    elif model_name == "hsv":
-        batch = rgb_2_hsv(orig_batch)  # (1, H, W, 3)
-    elif model_name == "gray":
-        batch = rgb_2_gray(orig_batch)[..., np.newaxis]  # (1, H, W, 1)
-    else:
-        raise HTTPException(status_code=400, detail=f"Unknown model: {model_name}")
-
-    batch = np.transpose(batch, (0, 3, 1, 2))  # (1, H, W, C) -> (1, C, H, W)
-    return torch.tensor(batch).float().to(DEVICE)
-
-
-@app.post(
-    "/predict",
-    response_model=PredictResponse,
-    summary="Classify an image",
-    tags=["Inference"],
-    responses={
-        400: {"description": "Invalid image or unknown model"},
-        503: {"description": "No models loaded"},
-    },
-)
-async def predict_all(
-    file: UploadFile = File(..., description="Image file (jpg, jpeg, png) to classify"),
-):
-    """
-    Runs the uploaded image through all loaded models and returns the
-    predicted class and confidence for each color space.
-
-    Args:
-        file (UploadFile): The uploaded image file (jpg, jpeg, or png) to classify.
-
-    Returns:
-        dict: A dictionary with the original "filename" and a "results" mapping where
-              each model name (rgb, hsv, gray) maps to its predicted class
-             name and confidence score.
-
-    Raises:
-        HTTPException:
-            - 503 error if no models are loaded.
-            - 400 error if the uploaded image is invalid
-    """
-    if not MODELS:
-        raise HTTPException(status_code=503, detail="No models loaded.")
     
-    results = {}
-    raw = await file.read()
-    for model_name in MODELS:
-        results[model_name] = predict(model_name, preprocess(raw, model_name))
-    return {"filename": file.filename, "results": results}
+    Returns:
+        None
+    """
+    # Loading and preprocessing the data
+    images, labels, class_names = load_images()
+    images = normalize(images)
+    num_classes = len(class_names)
+
+
+    MODELS = {}
+    try:
+        MODELS["rgb"] = load_model("./models/CNN_rgb.zip", "rgb")
+        MODELS["hsv"] = load_model("./models/CNN_hsv.zip", "hsv")
+        MODELS["gray"] = load_model("./models/CNN_gray.zip", "gray")
+        CLASS_NAMES = load_class_names("./models/class_names.json")
+
+    # Raise an error if loading fails
+    except Exception as e:
+        raise RuntimeError(f"Failed to load models: {e}") from e
+
+    # Splitting the data, training, evaluating on the validation set,
+    # retraining with the best validation model,
+    # and evaluating on the test set for each color space representation.
+
+    # RGB
+    X_train, X_val, X_test, y_train, y_val, y_test = split(images, labels)
+
+    # Evaluating on the validation set
+    rgb_val_acc = evaluate_validation(MODELS["rgb"], change_order(X_val), y_val, "RGB")
+    hsv_val_acc = evaluate_validation(MODELS["hsv"], change_order(X_val), y_val, "HSV")
+    gray_val_acc = evaluate_validation(
+        MODELS["gray"], add_dimension(X_val), y_val, "Grayscale"
+    )
+
+    # Evaluating on the test set
+    rgb_test_acc = evaluate_test(
+        MODELS["rgb"], change_order(X_test), y_test, "RGB"
+    )
+    hsv_test_acc = evaluate_test(
+        MODELS["hsv"], change_order(X_test), y_test, "HSV"
+    )
+    gray_test_acc = evaluate_test(
+        MODELS["gray"], add_dimension(X_test), y_test, "Grayscale"
+    )
+
+    # Printing the comparison of validation and test accuracies for all models.
+    print("\n--- Comparison between CNN models on the validation set ---")
+    print(f"RGB validation accuracy: {rgb_val_acc:.4f}")
+    print(f"HSV validation accuracy: {hsv_val_acc:.4f}")
+    print(f"Grayscale validation accuracy: {gray_val_acc:.4f}")
+
+    # Evaluating on the test set and printing the results for all models.
+    print("\n--- Comparison between CNN models on the test set ---")
+    print(f"RGB test accuracy: {rgb_test_acc:.4f}")
+    print(f"HSV test accuracy: {hsv_test_acc:.4f}")
+    print(f"Grayscale test accuracy: {gray_test_acc:.4f}")
+
+
+# Running the main function
+if __name__ == "__main__":
+    main()

@@ -29,9 +29,32 @@ The CNN models are deployed using FastAPI, which allows users to upload an RGB i
     source .venv/bin/activate
 ```
 
+## Code Structure
+
+```
+data/               Folder with the images of our dataset
+    fruits/         Folder containing all images of fruit - 5 classes
+    vegetables/     Folder containing all images of vegetables - 5 classes
+images/             Folder with code-generated images
+models/             Folder with pre-trained models used by the API
+api.py              File building the API
+CNN.py              File with the CNN model
+main.py             Main file which runs preprocessing, training, and evaluating the models
+plots.py            File generating plots for initial data analysis
+preprocessing.py    File with preprocessing functions
+SVM.py              File with the SVM model
+train.py            File with training the model on validation and test set
+```
+
+## Training the Model
+
+In order to train the model, run `main.py`. 
+
+This file includes preprocessing of the data, training the models, evaluating the performance on the validation set, re-training the models with teh best parameters, and evaluating the models on the test set.
+
 ## Launch API
 
-Before running the API, run `models.py` so the trained models are saved to disk.
+Before running the API, run `main.py` so the trained models are saved to disk.
 
 1. Train and save the models
 

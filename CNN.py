@@ -41,21 +41,22 @@ class CNN(nn.Module):
         self.fc2 = nn.Linear(128, num_classes)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(0.5)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+ 
+    def forward(self, batch: torch.Tensor) -> torch.Tensor:
         """
         Defines the forward pass of the CNN model.
 
         Args:
-            x (torch.Tensor): The input tensor representing a batch of images.
+            batch (torch.Tensor): The input tensor representing a batch of images.
 
         Returns:
             torch.Tensor: The output tensor representing the class scores for each input image.
         """
-        x = self.pool(self.relu(self.conv1(x)))
-        x = self.pool(self.relu(self.conv2(x)))
-        x = x.reshape(-1, 64 * 16 * 16)
-        x = self.relu(self.fc1(x))
-        x = self.dropout(x)
-        x = self.fc2(x)
-        return x
+        batch = self.pool(self.relu(self.conv1(batch)))
+        batch = self.pool(self.relu(self.conv2(batch)))
+        batch = batch.reshape(-1, 64 * 16 * 16)
+        batch = self.relu(self.fc1(batch))
+        batch = self.dropout(batch)
+        batch = self.fc2(batch)
+
+        return batch

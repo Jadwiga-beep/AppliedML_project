@@ -7,6 +7,15 @@ import torch
 import torch.nn as nn
 
 from CNN import CNN
+from preprocessing import (
+    add_dimension,
+    change_order,
+    load_images,
+    normalize,
+    rgb_2_gray,
+    rgb_2_hsv,
+    split,
+)
 
 # Hyperparameters for training the CNN model
 EPOCHS = 50
@@ -249,6 +258,7 @@ def save_model(model: CNN, file_name: str) -> bool:
     if folder:
         os.makedirs(folder, exist_ok=True)
     torch.save(model.state_dict(), file_name)
+
     print(f"Successfully saved {file_name}")
     return True
 
@@ -265,6 +275,7 @@ def load_model(file_name: str, model_name: str) -> CNN:
     """
     if model_name not in INPUT_SHAPES:
         raise ValueError(f"Unknown model name '{model_name}'")
+
     state = torch.load(file_name, map_location=DEVICE)
     num_classes = state["fc2.bias"].shape[0]
     model = CNN(input_shape=INPUT_SHAPES[model_name], num_classes=num_classes).to(
@@ -272,6 +283,7 @@ def load_model(file_name: str, model_name: str) -> CNN:
     )
     model.load_state_dict(state)
     model.eval()
+
     print(f"Successfully loaded {file_name}")
     return model
 
@@ -287,11 +299,12 @@ def save_class_names(class_names: list, file_name: str) -> bool:
     Returns:
         bool: True if the class list was successfully saved, otherwise False.
     """
-
     folder = os.path.dirname(file_name)
+
     if folder:
         os.makedirs(folder, exist_ok=True)
     json.dump(class_names, open(file_name, "w"))
+
     print(f"Successfully saved {file_name}")
     return True
 
@@ -309,10 +322,91 @@ def load_class_names(file_name: str) -> list:
 
     if not os.path.exists(file_name):
         raise Exception(f"Can not find {file_name} to load")
+
     loaded_names = json.load(open(file_name))
     print(f"Successfully loaded {file_name}")
+
     pretty_names = []
     for name in loaded_names:
         name = name[5:]
         pretty_names.append(name)
+
     return pretty_names
+
+
+def train_and_save():
+    # Loading and preprocessing the data
+    images, labels, class_names = load_images()
+    images = normalize(images)
+    num_classes = len(class_names)
+
+    # RGB
+    X_train, X_val, X_test, y_train, y_val, y_test = split(images, labels)
+    model_rgb = train(
+        change_order(X_train),
+        y_train,
+        change_order(X_val),
+        y_val,
+        num_classes,
+        (64, 64, 3),
+        "RGB",
+    )
+    optimized_model_rgb = retrain_with_best_val(
+        model_rgb,
+        change_order(X_train),
+        y_train,
+        change_order(X_val),
+        y_val,
+        "RGB",
+    )
+
+    # HSV
+    X_train, X_val, X_test, y_train, y_val, y_test = split(rgb_2_hsv(images), labels)
+    model_hsv = train(
+        change_order(X_train),
+        y_train,
+        change_order(X_val),
+        y_val,
+        num_classes,
+        (64, 64, 3),
+        "HSV",
+    )
+    optimized_model_hsv = retrain_with_best_val(
+        model_hsv,
+        change_order(X_train),
+        y_train,
+        change_order(X_val),
+        y_val,
+        "HSV",
+    )
+
+    # Grayscale
+    X_train, X_val, X_test, y_train, y_val, y_test = split(rgb_2_gray(images), labels)
+    model_gray = train(
+        add_dimension(X_train),
+        y_train,
+        add_dimension(X_val),
+        y_val,
+        num_classes,
+        (64, 64, 1),
+        "Grayscale",
+    )
+    optimized_model_gray = retrain_with_best_val(
+        model_gray,
+        add_dimension(X_train),
+        y_train,
+        add_dimension(X_val),
+        y_val,
+        "Grayscale",
+    )
+
+
+    # Saving the optimized models and class names to disk.
+    save_model(optimized_model_rgb, "./models/CNN_rgb.zip")
+    save_model(optimized_model_hsv, "./models/CNN_hsv.zip")
+    save_model(optimized_model_gray, "./models/CNN_gray.zip")
+    save_class_names(class_names, "./models/class_names.json")
+
+
+if __name__ == "__train__":
+    train_and_save()

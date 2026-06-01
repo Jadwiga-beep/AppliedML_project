@@ -60,7 +60,17 @@ MAX_IMAGES = 100  # images per class used for PCA (keeps runtime fast)
 SAVE_DIR = "."  # where to save the output figures
 DPI = 150
 
-def load_images_from_class(class_path, max_n=None):
+def load_images_from_class(class_path, max_n=None) -> list[np.ndarray]:
+    """
+    Loads images from a specified class directory, resizes them, and returns a list of image arrays.
+    
+    Args:
+        class_path (str): The path to the class directory containing the images.
+        max_n (int, optional): The maximum number of images to load. If None, loads all images. Defaults to None.
+
+    Returns:
+        list[np.ndarray]: A list of numpy arrays representing the loaded and resized images.
+    """
     files = [
         f
         for f in os.listdir(class_path)
@@ -68,6 +78,7 @@ def load_images_from_class(class_path, max_n=None):
     ]
     if max_n is not None:
         files = files[:max_n]
+
     imgs = []
     for f in files:
         try:
@@ -79,10 +90,18 @@ def load_images_from_class(class_path, max_n=None):
     return imgs
 
 
-def flatten_to_feature_vector(imgs):
+def flatten_to_feature_vector(imgs: list[np.ndarray]) -> np.ndarray:
+    """
+    Flattens a list of images into a 2D array where each row corresponds to a flattened image.
+
+    Args:
+        imgs (list[np.ndarray]): A list of images, where each image is a numpy array of shape (H, W, C).
+
+    Returns:
+        np.ndarray: A 2D array of shape (N, H*W*C) where N is the number of images, 
+            and each row is a flattened and normalized image.
+    """
     return np.stack([img.astype(np.float32).flatten() / 255.0 for img in imgs])
-
-
 
 all_images = {}
 for cls in CLASSES:
@@ -107,6 +126,7 @@ ax.set_title(
 ax.set_xlabel("Class")
 ax.set_ylabel("Number of images")
 ax.set_ylim(0, max(counts) * 1.18)
+
 for bar, count in zip(bars, counts):
     ax.text(
         bar.get_x() + bar.get_width() / 2,
