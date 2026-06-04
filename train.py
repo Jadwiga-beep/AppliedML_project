@@ -2,9 +2,12 @@ import copy
 import json
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 import torch
 import torch.nn as nn
+from sklearn.metrics import confusion_matrix
 
 from CNN import CNN
 from preprocessing import (
@@ -368,62 +371,32 @@ def train_and_save() -> None:
 
     # RGB
     X_train, X_val, X_test, y_train, y_val, y_test = split(images, labels)
+    X_train_rgb, X_val_rgb = change_order(X_train), change_order(X_val)
     model_rgb = train(
-        change_order(X_train),
-        y_train,
-        change_order(X_val),
-        y_val,
-        num_classes,
-        (64, 64, 3),
-        "RGB",
+        X_train_rgb, y_train, X_val_rgb, y_val, num_classes, (64, 64, 3), "RGB"
     )
     optimized_model_rgb = retrain_with_best_val(
-        model_rgb,
-        change_order(X_train),
-        y_train,
-        change_order(X_val),
-        y_val,
-        "RGB",
+        model_rgb, X_train_rgb, y_train, X_val_rgb, y_val, "RGB"
     )
 
     # HSV
     X_train, X_val, X_test, y_train, y_val, y_test = split(rgb_2_hsv(images), labels)
+    X_train_hsv, X_val_hsv = change_order(X_train), change_order(X_val)
     model_hsv = train(
-        change_order(X_train),
-        y_train,
-        change_order(X_val),
-        y_val,
-        num_classes,
-        (64, 64, 3),
-        "HSV",
+        X_train_hsv, y_train, X_val_hsv, y_val, num_classes, (64, 64, 3), "HSV"
     )
     optimized_model_hsv = retrain_with_best_val(
-        model_hsv,
-        change_order(X_train),
-        y_train,
-        change_order(X_val),
-        y_val,
-        "HSV",
+        model_hsv, X_train_hsv, y_train, X_val_hsv, y_val, "HSV"
     )
 
     # Grayscale
     X_train, X_val, X_test, y_train, y_val, y_test = split(rgb_2_gray(images), labels)
+    X_train_gray, X_val_gray = change_order(X_train), change_order(X_val)
     model_gray = train(
-        add_dimension(X_train),
-        y_train,
-        add_dimension(X_val),
-        y_val,
-        num_classes,
-        (64, 64, 1),
-        "Grayscale",
+        X_train_gray, y_train, X_val_gray, y_val, num_classes, (64, 64, 1), "Grayscale"
     )
     optimized_model_gray = retrain_with_best_val(
-        model_gray,
-        add_dimension(X_train),
-        y_train,
-        add_dimension(X_val),
-        y_val,
-        "Grayscale",
+        model_gray, X_train_gray, y_train, X_val_gray, y_val, "Grayscale"
     )
 
     # Saving the optimized models and class names to disk.
@@ -431,6 +404,31 @@ def train_and_save() -> None:
     save_model(optimized_model_hsv, "./models/CNN_hsv.zip")
     save_model(optimized_model_gray, "./models/CNN_gray.zip")
     save_class_names(class_names, "./models/class_names.json")
+
+
+def _load_models_and_data() -> tuple:
+    """
+    Loads the saved CNN models and the dataset for evaluation.
+
+    Args:
+        None
+
+    Returns:
+        tuple: (images, labels, class_names, MODELS)
+
+    Raises:
+        RuntimeError: If there is an error loading the models or data.
+    """
+    images, labels, class_names = load_and_prepare_data()
+    MODELS = {}
+    try:
+        MODELS["rgb"] = load_model("./models/CNN_rgb.zip", "rgb")
+        MODELS["hsv"] = load_model("./models/CNN_hsv.zip", "hsv")
+        MODELS["gray"] = load_model("./models/CNN_gray.zip", "gray")
+    except Exception as e:
+        raise RuntimeError(f"Failed to load models: {e}") from e
+
+    return images, labels, class_names, MODELS
 
 
 def evaluate_all() -> None:
@@ -444,15 +442,7 @@ def evaluate_all() -> None:
     Returns:
         None
     """
-    images, labels, class_names = load_and_prepare_data()
-
-    MODELS = {}
-    try:
-        MODELS["rgb"] = load_model("./models/CNN_rgb.zip", "rgb")
-        MODELS["hsv"] = load_model("./models/CNN_hsv.zip", "hsv")
-        MODELS["gray"] = load_model("./models/CNN_gray.zip", "gray")
-    except Exception as e:
-        raise RuntimeError(f"Failed to load models: {e}") from e
+    images, labels, class_names, MODELS = _load_models_and_data()
 
     X_train, X_val, X_test, y_train, y_val, y_test = split(images, labels)
 
@@ -481,3 +471,46 @@ def evaluate_all() -> None:
     print(f"RGB test accuracy: {rgb_test_acc:.4f}")
     print(f"HSV test accuracy: {hsv_test_acc:.4f}")
     print(f"Grayscale test accuracy: {gray_test_acc:.4f}")
+
+
+def heat_map_conf_matrix() -> None:
+    """
+    Generates and saves a heatmap of the confusion matrix for all models and test dataset.
+
+    Args:
+        None
+
+    Returns:
+        None: Saves the heat map as an image.
+
+    Raises:
+        RuntimeError: If there is an error loading the models or data.
+    """
+    images, labels, class_names, MODELS = _load_models_and_data()
+
+    class_names = [name[5:] for name in class_names]
+
+    X_train, X_val, X_test, y_train, y_val, y_test = split(images, labels)
+
+    X_test_versions = {
+        "rgb": torch.tensor(change_order(X_test)).float().to(DEVICE),
+        "hsv": torch.tensor(change_order(rgb_2_hsv(X_test))).float().to(DEVICE),
+        "gray": torch.tensor(add_dimension(rgb_2_gray(X_test))).float().to(DEVICE),
+    }
+
+    os.makedirs("./images", exist_ok=True)
+
+    for model_name, model in MODELS.items():
+        with torch.no_grad():
+            y_pred = model(X_test_versions[model_name]).argmax(1).cpu().numpy()
+
+        cm = confusion_matrix(y_test, y_pred)
+        plt.figure(figsize=(11, 10))
+        sns.heatmap(
+            cm, annot=True, fmt="d", xticklabels=class_names, yticklabels=class_names
+        )
+        plt.xlabel("Predicted")
+        plt.ylabel("True")
+        plt.title(f"Heat Map — {model_name.upper()}")
+        plt.savefig(f"./images/heat_map_{model_name}.png")
+        plt.close()

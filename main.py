@@ -1,5 +1,10 @@
 from SVM import run_svm_baseline
-from train import evaluate_all, load_and_prepare_data, train_and_save
+from train import (
+    evaluate_all,
+    heat_map_conf_matrix,
+    load_and_prepare_data,
+    train_and_save,
+)
 
 
 def main() -> None:
@@ -18,6 +23,7 @@ def main() -> None:
     """
     train_and_save()
     evaluate_all()
+    heat_map_conf_matrix()
 
     print("\n--- Training SVM baseline models ---")
     images, labels, _ = load_and_prepare_data()
