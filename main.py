@@ -1,10 +1,7 @@
+from evaluation import evaluation_pipeline
+from preprocessing import load_and_prepare_data, split
 from SVM import run_svm_baseline
-from train import (
-    evaluate_all,
-    heat_map_conf_matrix,
-    load_and_prepare_data,
-    train_and_save,
-)
+from train import set_seed, train_pipeline
 
 
 def main() -> None:
@@ -21,12 +18,23 @@ def main() -> None:
     Returns:
         None
     """
-    train_and_save()
-    evaluate_all()
-    heat_map_conf_matrix()
+    set_seed()
+
+    print("\n--- Training the CNN models ---")
+
+    # Data preprocessing
+    images, labels, class_names = load_and_prepare_data()
+    num_classes = len(class_names)
+    X_train, X_val, X_test, y_train, y_val, y_test = split(images, labels)
+
+    # Training the CNN models
+    train_pipeline(X_train, X_val, X_test, y_train, y_val, num_classes)
+
+    # Evaluating the CNN models
+    evaluation_pipeline(X_train, X_val, X_test, y_val, y_test)
 
     print("\n--- Training SVM baseline models ---")
-    images, labels, _ = load_and_prepare_data()
+
     run_svm_baseline(images, labels, "./models")
 
 

@@ -164,3 +164,57 @@ def add_dimension(X: np.ndarray) -> np.ndarray:
         np.ndarray: The array with an additional dimension.
     """
     return X[:, np.newaxis, :, :]
+
+
+def load_and_prepare_data() -> tuple[np.ndarray, np.ndarray, list[str]]:
+    """
+    Loads the image dataset, normalizes pixel values to [0, 1], and returns
+    the images, labels, and class names.
+
+    Args:
+        None
+
+    Returns:
+        tuple: (images, labels, class_names)
+    """
+    images, labels, class_names = load_images()
+    images = normalize(images)
+
+    return images, labels, class_names
+
+
+def process_data(X_train: np.ndarray, X_val: np.ndarray, X_test: np.ndarray) -> tuple:
+    """
+    Processes the data to be in the correct color space and format.
+
+    Args:
+        X_train (np.ndarray): The training images as a numpy array.
+        X_val (np.ndarray): The validation images as a numpy array.
+        X_test (np.ndarray): The test images as a numpy array.
+
+    Returns:
+        tuple: The processed images in 3 colour spaces.
+    """
+    # RGB
+    X_train_rgb, X_val_rgb, X_test_rgb = (
+        change_order(X_train),
+        change_order(X_val),
+        change_order(X_test),
+    )
+    rgb = [X_train_rgb, X_val_rgb, X_test_rgb]
+
+    X_train_hsv, X_val_hsv, X_test_hsv = (
+        change_order(rgb_2_hsv(X_train)),
+        change_order(rgb_2_hsv(X_val)),
+        change_order(rgb_2_hsv(X_test)),
+    )
+    hsv = X_train_hsv, X_val_hsv, X_test_hsv
+
+    X_train_gray, X_val_gray, X_test_gray = (
+        add_dimension(rgb_2_gray(X_train)),
+        add_dimension(rgb_2_gray(X_val)),
+        add_dimension(rgb_2_gray(X_test)),
+    )
+    gray = X_train_gray, X_val_gray, X_test_gray
+
+    return rgb, hsv, gray
