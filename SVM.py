@@ -151,6 +151,43 @@ def svm_conf_matrix(
     plt.close()
 
 
+def plot_svm_hinge_losses(
+    results: dict,
+    save_path: str = "images/hinge_loss_svm.png",
+) -> None:
+    """
+    Bar chart comparing train vs test hinge loss for each SVM color space.
+
+    Args:
+        results (dict): Keys are color-space names, values contain
+            train_hinge_loss and test_hinge_loss.
+        save_path (str): File path for the saved figure.
+    """
+    color_spaces = list(results.keys())
+    train_losses = [results[cs]["train_hinge_loss"] for cs in color_spaces]
+    test_losses = [results[cs]["test_hinge_loss"] for cs in color_spaces]
+
+    x = np.arange(len(color_spaces))
+    width = 0.35
+
+    fig, ax = plt.subplots(figsize=(7, 4))
+    ax.bar(x - width / 2, train_losses, width, label="Train", color="#4a90d9")
+    ax.bar(x + width / 2, test_losses, width, label="Test", color="#e05252")
+    ax.set_xticks(x)
+    ax.set_xticklabels([cs.upper() for cs in color_spaces])
+    ax.set_xlabel("Color space")
+    ax.set_ylabel("Hinge loss")
+    ax.set_title("SVM train vs test hinge loss by color space", fontweight="bold")
+    ax.legend()
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    plt.tight_layout()
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path, dpi=150)
+    plt.close()
+    print(f"Saved SVM hinge loss plot → {save_path}")
+
+
 def run_svm(
     images: np.ndarray,
     labels: np.ndarray,
@@ -210,5 +247,7 @@ def run_svm(
             color_space=color_space,
             output_dir="./images",
         )
+
+    plot_svm_hinge_losses(results)
 
     return results

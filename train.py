@@ -2,6 +2,7 @@ import copy
 import json
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
@@ -41,7 +42,7 @@ def train(
     num_classes: int,
     input_shape: tuple[int, int, int],
     name: str,
-) -> CNN:
+) -> tuple[CNN, dict]:
     """
     Trains a CNN model on the given training dataset.
 
@@ -55,7 +56,8 @@ def train(
         name (str): The name of the model (for logging purposes).
 
     Returns:
-        CNN: The trained CNN model.
+        tuple[CNN, dict]: The trained CNN model and a history dict with
+            train_loss and val_loss lists (one value per epoch).
     """
     set_seed()
 
@@ -71,6 +73,8 @@ def train(
     best_val_loss = float("inf")
     best_state = None
     epochs_without_improvement = 0
+    train_losses: list[float] = []
+    val_losses: list[float] = []
 
     # Training loop with early stopping based on validation loss
     for epoch in range(EPOCHS):
@@ -92,8 +96,12 @@ def train(
             val_loss = loss_fn(model(X_val_t), y_val_t).item()
             val_acc = (model(X_val_t).argmax(1) == y_val_t).float().mean().item()
 
+        avg_train_loss = total_loss / len(X_train_t)
+        train_losses.append(avg_train_loss)
+        val_losses.append(val_loss)
+
         print(
-            f"[{name}] Epoch {epoch + 1}/{EPOCHS} — loss: {total_loss / len(X_train_t):.4f}  val_loss: {val_loss:.4f}  val_acc: {val_acc:.4f}"
+            f"[{name}] Epoch {epoch + 1}/{EPOCHS} — loss: {avg_train_loss:.4f}  val_loss: {val_loss:.4f}  val_acc: {val_acc:.4f}"
         )
 
         if val_loss < best_val_loss:
@@ -107,8 +115,7 @@ def train(
                 break
 
     model.load_state_dict(best_state)
-
-    return model
+    return model, {"train_loss": train_losses, "val_loss": val_losses}
 
 
 def save_model(model: CNN, file_name: str) -> bool:
@@ -197,6 +204,42 @@ def load_class_names(file_name: str) -> list:
     return [name[5:] for name in loaded_names]
 
 
+def plot_learning_curves(
+    histories: dict[str, dict],
+    save_path: str = "images/learning_curves_cnn.png",
+) -> None:
+    """
+    Plots train vs validation loss per epoch for each CNN color space.
+
+    Args:
+        histories (dict[str, dict]): Color-space name mapped to history dict
+            with train_loss and val_loss lists.
+        save_path (str): File path for the saved figure.
+    """
+    fig, axes = plt.subplots(1, len(histories), figsize=(5 * len(histories), 4), sharey=True)
+    if len(histories) == 1:
+        axes = [axes]
+
+    for ax, (name, history) in zip(axes, histories.items()):
+        epochs = range(1, len(history["train_loss"]) + 1)
+        ax.plot(epochs, history["train_loss"], label="Train loss", color="#4a90d9")
+        ax.plot(epochs, history["val_loss"], label="Val loss", color="#e05252")
+        ax.set_title(f"CNN – {name}", fontweight="bold")
+        ax.set_xlabel("Epoch")
+        if ax is axes[0]:
+            ax.set_ylabel("Cross-entropy loss")
+        ax.legend()
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+    plt.suptitle("CNN learning curves by color space", fontsize=13, fontweight="bold")
+    plt.tight_layout()
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path, dpi=150)
+    plt.close()
+    print(f"Saved learning curves → {save_path}")
+
+
 def train_pipeline(
     X_train: np.ndarray,
     X_val: np.ndarray,
@@ -226,19 +269,19 @@ def train_pipeline(
     X_train_gray, X_val_gray, X_test_gray = gray
 
     # RGB
-    model_rgb = train(
+    model_rgb, history_rgb = train(
         X_train_rgb, y_train, X_val_rgb, y_val, num_classes, INPUT_SHAPES["rgb"], "RGB"
     )
     print("Successfully trained the RGB model.")
 
     # HSV
-    model_hsv = train(
+    model_hsv, history_hsv = train(
         X_train_hsv, y_train, X_val_hsv, y_val, num_classes, INPUT_SHAPES["hsv"], "HSV"
     )
     print("Successfully trained the HSV model.")
 
     # Grayscale
-    model_gray = train(
+    model_gray, history_gray = train(
         X_train_gray,
         y_train,
         X_val_gray,
@@ -248,6 +291,8 @@ def train_pipeline(
         "Grayscale",
     )
     print("Successfully trained the Grayscale model.")
+
+    plot_learning_curves({"RGB": history_rgb, "HSV": history_hsv, "Grayscale": history_gray})
 
     # Saving the models
     save_model(model_rgb, "./models/CNN_rgb.zip")
