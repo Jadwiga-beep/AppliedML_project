@@ -7,8 +7,11 @@ This project implements a CNN that classifies fruits and vegetables and an SVM t
 
 The CNN models are deployed using FastAPI, which allows users to upload an RGB image and receive predictions from all three models.
 
+## Prerequisites 
 
-## Installation Dependencies
+- Docker installed
+
+## Docker pipeline
 
 1. Clone the repository
 
@@ -17,16 +20,16 @@ The CNN models are deployed using FastAPI, which allows users to upload an RGB i
     cd AppliedML_project
 ```
 
-2. Create a virtual environment and install dependencies
+2. Start the API:
 
 ```bash
-    uv sync
+docker compose up --build
 ```
 
-3. Activate the virtual environment
+3. Open the API docs:
 
-```bash
-    source .venv/bin/activate
+```text
+http://localhost:8000/docs
 ```
 
 ## Code Structure
@@ -48,8 +51,9 @@ train.py            File with retraining, evaluation, and saving functions
 
 ## Training the Model
 
-In order to train the model, run `main.py`. 
+The repository already includes pretrained model files in `models/`.
 
+If you want to retrain the models, run:
 ```bash
 python3 main.py
 ```
@@ -58,22 +62,35 @@ This file includes preprocessing of the data, training the models, evaluating th
 Additionally, it trains the SVM baseline model.
 
 
-## Launch API
+## Alternative running pipeline
 
-1. Before running the API, run `main.py` as described above so the trained models are saved to disk.
-
-
-2. Start the API server
+1. Clone the repository
 
 ```bash
-    uv run
-    uvicorn api:app --reload
+    git clone git@github.com:Jadwiga-beep/AppliedML_project.git
+    cd AppliedML_project
+```
+
+2. Create a virtual environment and install dependencies
+
+```bash
+    uv sync
+```
+
+3. Activate the virtual environment
+
+```bash
+    source .venv/bin/activate
+```
+
+4. In order to train the model, run `main.py`. 
+
+```bash
+python3 main.py
 ```
 
 
-## Using the API
-
-### Running the API through the Browser
+5.1 Running the API through the Browser
 
 Open the interactive docs and use the `/predict` endpoint to upload an image directly:
 
@@ -81,7 +98,7 @@ Open the interactive docs and use the `/predict` endpoint to upload an image dir
     http://127.0.0.1:8000/docs
 ```
 
-### Using `check.sh`
+5.2 Using `check.sh`
 
 `check.sh` is a bash script that takes an image URL and first downloads it, then sends it to the API, and prints the result. It additionally uses `|jq` to make the print more readable which can be installed with `sudo apt install jq` if needed. Make it executable once:
 
@@ -95,7 +112,7 @@ Then pass it an image URL in quotations:
 ./check.sh "image-address"
 ```
 
-### Using `curl` directly
+5.3 Using `curl` directly
 
 To send a local image file to the API yourself:
 
