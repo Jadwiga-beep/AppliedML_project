@@ -84,12 +84,17 @@ def evaluate_test(model: CNN, X_test: np.ndarray, y_test: np.ndarray) -> float:
 
 
 def heat_map_conf_matrix(
-    X_train: np.ndarray, X_val: np.ndarray, X_test: np.ndarray, y_test: np.ndarray
+    MODELS: dict,
+    X_train: np.ndarray,
+    X_val: np.ndarray,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
 ) -> None:
     """
     Generates and saves a heatmap of the confusion matrix for all models and test dataset.
 
     Args:
+        MODELS (dict): The saved CNN models.
         X_train (np.ndarray): The training images as a numpy array.
         X_val (np.ndarray): The validation images as a numpy array.
         X_test (np.ndarray): The test images as a numpy array.
@@ -98,8 +103,6 @@ def heat_map_conf_matrix(
     Returns:
         None: Saves the heat map as an image.
     """
-    MODELS = _load_models()
-
     class_names = load_class_names("./models/class_names.json")
 
     rgb_X_test, hsv_X_test, gray_X_test = [
@@ -180,4 +183,4 @@ def evaluation_pipeline(
     print(f"HSV test accuracy: {hsv_test_acc:.4f}")
     print(f"Grayscale test accuracy: {gray_test_acc:.4f}")
 
-    heat_map_conf_matrix(X_train, X_val, X_test, y_test)
+    heat_map_conf_matrix(MODELS, X_train, X_val, X_test, y_test)

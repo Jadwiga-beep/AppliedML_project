@@ -215,8 +215,13 @@ def plot_learning_curves(
         histories (dict[str, dict]): Color-space name mapped to history dict
             with train_loss and val_loss lists.
         save_path (str): File path for the saved figure.
+
+    Returns:
+        None: Saves the plot as an image file.
     """
-    fig, axes = plt.subplots(1, len(histories), figsize=(5 * len(histories), 4), sharey=True)
+    fig, axes = plt.subplots(
+        1, len(histories), figsize=(5 * len(histories), 4), sharey=True
+    )
     if len(histories) == 1:
         axes = [axes]
 
@@ -237,7 +242,8 @@ def plot_learning_curves(
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     plt.savefig(save_path, dpi=150)
     plt.close()
-    print(f"Saved learning curves → {save_path}")
+
+    print(f"Saved learning curves to {save_path}")
 
 
 def train_pipeline(
@@ -250,7 +256,7 @@ def train_pipeline(
 ) -> None:
     """
     Main pipeline function: loads and processes the data, trains the CNN models,
-    and saves the best models and class names.
+    plots the learning curves, and saves the best models and class names.
 
     Args:
         X_train (np.ndarray): The training images as a numpy array.
@@ -292,7 +298,10 @@ def train_pipeline(
     )
     print("Successfully trained the Grayscale model.")
 
-    plot_learning_curves({"RGB": history_rgb, "HSV": history_hsv, "Grayscale": history_gray})
+    plot_learning_curves(
+        {"RGB": history_rgb, "HSV": history_hsv, "Grayscale": history_gray},
+        "images/learning_curves_cnn.png",
+    )
 
     # Saving the models
     save_model(model_rgb, "./models/CNN_rgb.zip")

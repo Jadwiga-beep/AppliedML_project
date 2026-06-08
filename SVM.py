@@ -162,6 +162,9 @@ def plot_svm_hinge_losses(
         results (dict): Keys are color-space names, values contain
             train_hinge_loss and test_hinge_loss.
         save_path (str): File path for the saved figure.
+
+    Returns:
+        None: Saves the plot as an image file.
     """
     color_spaces = list(results.keys())
     train_losses = [results[cs]["train_hinge_loss"] for cs in color_spaces]
@@ -185,7 +188,8 @@ def plot_svm_hinge_losses(
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     plt.savefig(save_path, dpi=150)
     plt.close()
-    print(f"Saved SVM hinge loss plot → {save_path}")
+
+    print(f"Saved SVM hinge loss plot to {save_path}")
 
 
 def run_svm(
@@ -248,6 +252,6 @@ def run_svm(
             output_dir="./images",
         )
 
-    plot_svm_hinge_losses(results)
+    plot_svm_hinge_losses(results, "images/hinge_loss_svm.png")
 
     return results
