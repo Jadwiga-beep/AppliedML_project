@@ -54,26 +54,26 @@ Additionally, it trains and evaluates the SVM baseline model.
 
 ## Activate Virtual Environemnt
 
-1. Clone the repository
+Clone the repository
 
 ```bash
     git clone git@github.com:Jadwiga-beep/AppliedML_project.git
     cd AppliedML_project
 ```
 
-2. Create a virtual environment and install dependencies
+Create a virtual environment and install dependencies
 
 ```bash
     uv sync
 ```
 
-3. Activate the virtual environment
+Activate the virtual environment
 
 ```bash
     source .venv/bin/activate
 ```
 
-4. In order to train the model, run `main.py`. 
+In order to train the model, run `main.py`. 
 
 ```bash
     python3 main.py
@@ -82,19 +82,19 @@ Additionally, it trains and evaluates the SVM baseline model.
 
 ## Loadding the API
 
-5.1 Run the uvicorn comand in a terminal to initate the API.
+Run the uvicorn comand in a terminal to initate the API.
 
 ```
     uvicorn api:app --reload
 ```
 
-5.2 Or alternativley, use the docker pipeline.
+Or alternativley, use the docker pipeline.
 
 ```bash
     docker compose up --build
 ```
 
-### 6.1 Through a browser
+### Through a browser
 
 Open the interactive docs and use the `/predict` endpoint to upload an image directly:
 
@@ -102,7 +102,7 @@ Open the interactive docs and use the `/predict` endpoint to upload an image dir
     http://127.0.0.1:8000/docs
 ```
 
-### 6.2 Using `check.sh`
+### Using `check.sh`
 
 `check.sh` is a bash script that takes an image URL and first downloads it, then sends it to the API, and prints the result. It additionally uses `|jq` to make the print more readable which can be installed with `sudo apt install jq` if needed. Make it executable once:
 
@@ -116,7 +116,7 @@ Then pass it an image URL in quotations:
 ./check.sh "image-address"
 ```
 
-### 6.3 Using `curl` directly
+### Using `curl` directly
 
 To send a local image file to the API yourself:
 
